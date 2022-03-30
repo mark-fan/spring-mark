@@ -1,6 +1,7 @@
 package com.markcode.spring;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.util.Map;
@@ -83,7 +84,6 @@ public class MarkApplicationContext {
 
 
     public Object getBean(String beanName) {
-        System.out.println(beanName);
         if (beandefinitionMap.containsKey(beanName)) {
             BeanDefinition beanDefinition = beandefinitionMap.get(beanName);
             if (beanDefinition.getScope().equals("singleton")) {
@@ -100,6 +100,14 @@ public class MarkApplicationContext {
         Class aClass = beanDefinition.getaClass();
         try {
             Object instance = aClass.getDeclaredConstructor().newInstance();
+            // 依赖注入
+            Field[] declaredFields = aClass.getDeclaredFields();
+            for (Field declaredField : declaredFields) {
+                if (declaredField.isAnnotationPresent(Autowired.class)){
+                    declaredField.setAccessible(true);
+                    declaredField.set(instance,getBean(declaredField.getName()));
+                }
+            }
             return instance;
 
         } catch (InstantiationException e) {
